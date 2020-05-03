@@ -79,9 +79,11 @@ async function createCert(force = false) {
 
     // stop http server
     server.on('request', (req, res) => {
+      // eslint-disable-next-line no-underscore-dangle
       req.socket._isIdle = false;
       res.on('finish', () => {
         log.state('ACME validation server closing');
+        // eslint-disable-next-line no-underscore-dangle
         req.socket._isIdle = true;
         req.socket.destroy();
       });
