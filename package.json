@@ -1,0 +1,38 @@
+{
+  "name": "piacme",
+  "version": "0.0.1",
+  "description": "Simple ACME/LetsEncrypt HTTP/SSL Certificate Management",
+  "main": "piacme.js",
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "scripts": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vladmandic/piacme.git"
+  },
+  "keywords": [
+    "ACME",
+    "LetsEncrypt",
+    "SSL"
+  ],
+  "author": "Vladimir Mandic <mandic00@live.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/vladmandic/piacme/issues"
+  },
+  "homepage": "https://github.com/vladmandic/piacme#readme",
+  "dependencies": {
+    "@root/acme": "^3.0.10",
+    "@root/csr": "^0.8.1",
+    "@root/keypairs": "^0.9.0",
+    "@root/pem": "^1.0.4",
+    "acme-http-01-webroot": "^3.0.0",
+    "moment": "^2.25.1",
+    "pilogger": "git+https://github.com/vladmandic/pilogger.git",
+    "x509.js": "^1.0.0"
+  },
+  "devDependencies": {
+    "eslint-config-airbnb-base": "^14.1.0"
+  }
+}
