@@ -27,14 +27,20 @@ let config = {
 };
 
 // internal variables
-let keyAuthorization;
 let acme;
 let initial = true;
+const auth = [];
 
 function notify(evt, msg) {
   log.data('ACME notification:', evt, msg);
-  if (msg.keyAuthorization) keyAuthorization = keyAuthorization || msg.keyAuthorization;
-  if (msg.challenge && msg.challenge.keyAuthorization) keyAuthorization = keyAuthorization || msg.challenge.keyAuthorization;
+  let key;
+  if (msg.challenge && msg.challenge.keyAuthorization) key = msg.challenge.keyAuthorization;
+  // if (msg.keyAuthorization) keyAuthorization = keyAuthorization || msg.keyAuthorization;
+  // if (msg.challenge && msg.challenge.keyAuthorization) keyAuthorization = keyAuthorization || msg.challenge.keyAuthorization;
+  let token;
+  if (msg.challenge && msg.challenge.token) token = msg.challenge.token;
+  const host = msg.altname || '';
+  if (key && token) auth.push({ token, key, host });
 }
 
 function sleep(timer = 100) {
@@ -57,15 +63,15 @@ async function createCert(force = false) {
 
     // start http server to listen for verification callback
     const server = http.createServer(async (req, res) => {
-      while (!keyAuthorization) await sleep(100); // wait until key gets populated in notification
-      if (req.url.includes('/.well-known/acme-challenge/')) {
+      while (auth.length < config.domains.length) await sleep(100); // wait until key gets populated in notification
+      const key = auth.find((a) => req.url.includes(a.token))
+      if (key) {
         res.writeHead(200);
-        res.write(keyAuthorization);
+        res.write(key.key);
         res.end();
-        log.info(`HTTP request:${req.url} sent:${keyAuthorization}`);
+        log.info(`Challenge for: ${key.host} request:${req.url} sent:${key.key}`);
       } else {
-        res.writeHead(404);
-        res.end();
+        log.info(`Challenge for: ${key.host} request:${req.url} unknown`);
       }
     });
 
