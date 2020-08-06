@@ -1,6 +1,6 @@
 {
   "name": "@vladmandic/piacme",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Simple ACME/LetsEncrypt HTTP/SSL Certificate Management",
   "main": "piacme.js",
   "engines": {
@@ -28,13 +28,13 @@
   },
   "homepage": "https://github.com/vladmandic/piacme#readme",
   "dependencies": {
-    "@root/acme": "^3.0.10",
+    "@root/acme": "^3.1.0",
     "@root/csr": "^0.8.1",
     "@root/keypairs": "^0.9.0",
     "@root/pem": "^1.0.4",
+    "@vladmandic/pilogger": "^0.1.2",
     "acme-http-01-webroot": "^3.0.0",
     "moment": "^2.27.0",
-    "pilogger": "git+https://github.com/vladmandic/pilogger.git",
     "x509.js": "^1.0.0"
   },
   "devDependencies": {
