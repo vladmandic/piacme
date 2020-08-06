@@ -35,8 +35,6 @@ function notify(evt, msg) {
   log.data('ACME notification:', evt, msg);
   let key;
   if (msg.challenge && msg.challenge.keyAuthorization) key = msg.challenge.keyAuthorization;
-  // if (msg.keyAuthorization) keyAuthorization = keyAuthorization || msg.keyAuthorization;
-  // if (msg.challenge && msg.challenge.keyAuthorization) keyAuthorization = keyAuthorization || msg.challenge.keyAuthorization;
   let token;
   if (msg.challenge && msg.challenge.token) token = msg.challenge.token;
   const host = msg.altname || '';
@@ -63,8 +61,9 @@ async function createCert(force = false) {
 
     // start http server to listen for verification callback
     const server = http.createServer(async (req, res) => {
+      // eslint-disable-next-line no-await-in-loop
       while (auth.length < config.domains.length) await sleep(100); // wait until key gets populated in notification
-      const key = auth.find((a) => req.url.includes(a.token))
+      const key = auth.find((a) => req.url.includes(a.token));
       if (key) {
         res.writeHead(200);
         res.write(key.key);
@@ -81,7 +80,9 @@ async function createCert(force = false) {
 
     // start actual verification
     log.info(`ACME validating domains: ${config.domains.join(' ')}`);
-    const pems = await acme.certificates.create({ account: config.account, accountKey: config.accountKey, csr, domains: config.domains, challenges, skipChallengeTests: true, skipDryRun: true });
+    const pems = await acme.certificates.create({
+      account: config.account, accountKey: config.accountKey, csr, domains: config.domains, challenges, skipChallengeTests: true, skipDryRun: true,
+    });
 
     // stop http server
     server.on('request', (req, res) => {
@@ -177,14 +178,18 @@ async function parseCert() {
   try {
     const f = await fs.promises.readFile(config.fullChain, 'ascii');
     const parsed = x509.parseCert(f);
-    details.fullChain = { subject: parsed.subject.commonName, issuer: parsed.issuer.commonName, notBefore: new Date(parsed.notBefore), notAfter: new Date(parsed.notAfter) };
+    details.fullChain = {
+      subject: parsed.subject.commonName, issuer: parsed.issuer.commonName, notBefore: new Date(parsed.notBefore), notAfter: new Date(parsed.notAfter),
+    };
   } catch (err) {
     details.fullChain = { error: err };
   }
   try {
     const f = await fs.promises.readFile(config.accountFile, 'ascii');
     const json = JSON.parse(f);
-    details.account = { contact: json.contact[0], initialIP: json.initialIp, createdAt: new Date(json.createdAt), status: json.status };
+    details.account = {
+      contact: json.contact[0], initialIP: json.initialIp, createdAt: new Date(json.createdAt), status: json.status,
+    };
   } catch (err) {
     details.account = { error: err };
   }
@@ -240,7 +245,6 @@ async function getCert() {
     } else log.warn(`SSL keys error server:${ssl.serverKey.error} account:${ssl.account.error}`);
     if (ssl.fullChain && !ssl.fullChain.error) {
       log.info(`SSL certificate subject:${ssl.fullChain.subject} issuer:${ssl.fullChain.issuer}`);
-      // log.info(`SSL certificate notBefore:${moment(ssl.fullChain.notBefore).format('YYYY-MM-DD HH:mm:ss')} notAfter:${moment(ssl.fullChain.notAfter).format('YYYY-MM-DD HH:mm:ss')}`);
     } else log.warn(`SSL certificate error: ${ssl.fullChain.error}`);
     config.SSL = { Key: `../${config.ServerKeyFile}`, Crt: `../${config.fullChain}` };
     initial = false;

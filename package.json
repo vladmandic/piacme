@@ -1,17 +1,20 @@
 {
-  "name": "piacme",
-  "version": "0.0.3",
+  "name": "@vladmandic/piacme",
+  "version": "0.1.0",
   "description": "Simple ACME/LetsEncrypt HTTP/SSL Certificate Management",
   "main": "piacme.js",
   "engines": {
     "node": ">=14.0.0"
   },
   "scripts": {
-    "lint": "htmlhint public/*.html && eslint --resolve-plugins-relative-to=/home/vlado/.nvm/versions/node/v14.0.0/lib *.js *.json && depcheck --ignores='eslint-plugin-*'"
+    "lint": "eslint *.js"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/vladmandic/piacme.git"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com/"
   },
   "keywords": [
     "ACME",
@@ -35,6 +38,8 @@
     "x509.js": "^1.0.0"
   },
   "devDependencies": {
+    "eslint": "^7.6.0",
+    "eslint-plugin-import": "^2.22.0",
     "eslint-config-airbnb-base": "^14.2.0"
   }
 }
