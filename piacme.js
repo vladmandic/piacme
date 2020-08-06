@@ -1,4 +1,4 @@
-const log = require('pilogger');
+const log = require('@vladmandic/pilogger');
 const fs = require('fs');
 const http = require('http');
 const moment = require('moment');
