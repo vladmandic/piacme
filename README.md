@@ -4,7 +4,7 @@ Simple ACME/LetsEncrypt HTTP/SSL Certificate Management
 
 ## Why
 
-Because out of all of the existing modules, I couldn't find one that does what I needed and doesn't carry large number of unnecessary dependencies.
+Because out of all of the existing modules, I couldn't find one that does what I needed and doesn't carry large number of unnecessary dependencies.  
 This module is written in pure ES6 and requires only several low-level crypto management dependencies.
 
 ## Usage

@@ -4,7 +4,7 @@
   "description": "Simple ACME/LetsEncrypt HTTP/SSL Certificate Management",
   "main": "piacme.js",
   "engines": {
-    "node": ">=14.0.0"
+    "node": ">=12.0.0"
   },
   "scripts": {
     "lint": "eslint *.js"
@@ -32,7 +32,7 @@
     "@root/csr": "^0.8.1",
     "@root/keypairs": "^0.9.0",
     "@root/pem": "^1.0.4",
-    "@vladmandic/pilogger": "^0.1.2",
+    "@vladmandic/pilogger": "^0.1.5",
     "acme-http-01-webroot": "^3.0.0",
     "moment": "^2.27.0",
     "x509.js": "^1.0.0"
