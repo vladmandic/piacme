@@ -2,6 +2,11 @@
 
 Simple ACME/LetsEncrypt HTTP/SSL Certificate Management
 
+## Why
+
+Because out of all of the existing modules, I couldn't find one that does what I needed and doesn't carry large number of unnecessary dependencies.
+This module is written in pure ES6 and requires only several low-level crypto management dependencies.
+
 ## Usage
 
 Initialize PiACME by passing a configuration object:
@@ -21,30 +26,44 @@ Initialize PiACME by passing a configuration object:
     piacme.init(config);
     const { Key, Crt } = await acme.getCert();
 
-Now you're free to use server key and certificate.  
-For example to start a secure http2 server:
+That's it!  
+Account registration, server key creation, certificate issuance, taget validation, and certificate renwal - are all handled automatically.
+Now you can use server key and certificate.  
+For example to start a secure **http2** server:
 
     const http2 = require('http2');
-    const opts = {
+    const fs = require('fs');
+    const options = {
       key = fs.readFileSync(Key);
       cert = fs.readFileSync(Crt);
     };
-    const server = http2.createSecureServer(opts);
+    const server = http2.createSecureServer(options);
+    server.listen(443);
+
+Or **https** server:
+
+    const http2 = require('https');
+    const fs = require('fs');
+    const options = {
+      key = fs.readFileSync(Key);
+      cert = fs.readFileSync(Crt);
+    };
+    const server = https.createServer(options);
     server.listen(443);
 
 ## Internal workflow
 
 All functions use same object passed during `init()` call.
-Core function is getCert() and it will either return existing valid certificate, issue a new one or trigger a certificate renewal.
+Core function is `getCert()` and it will either return existing valid certificate, issue a new one or trigger a certificate renewal.
 
-Internally, it calls `piacme.checkCert()` to verify if server key and certificate specified in config object already exists and are valid.  
+Internally, it calls `checkCert()` to verify if server key and certificate specified in config object already exists and are valid.  
 If yes, it will just return those objects: `config.ServerKeyFile` and `config.fullChain`.  
 If not, if calls:  
 
-- `piacme.createKeys()`  
+- `createKeys()`  
 Which is used only once per server lifetime.  
 It initialize LetsEncrypt account using maintainer info and generate server private key.
-- `piacme.createCert()`  
+- `createCert()`  
 Which is used to genrates new certificate if one doesn't exist or is about to expire.  
 Interally it temporarily starts a http server on port 80 to listen for LetsEncrypt validation callbacks and then shuts down the server.
 
@@ -55,12 +74,21 @@ Next, it calls `parseCert()` and parses cetificate details for validity before r
 To monitor certificate, call `monitorCert()` which updates object initially passed using `init()` call by triggering `getCert()` every 12 hours.  
 Usefull for certfificates with short lifespan that require freqent renewals.
 
-To get certificate details, call `parseCert()` and it will parse certificate from the initial object used during `init()` call.
+    piacme.monitorCert();
 
-    const ssl = await parseCert();
-    ssl: {
-      account: { error?, contact, createdAt },
-      serverKey: { error? },
-      accountKey: { error? },
-      fullChain: { error?, subject, issuer, notBefore, notAfter }
-    }
+(RFE: *Implement monitoring callback that can be used to automatically restart web server as needed*)
+
+To get certificate details, call `parseCert()` and it will parse certificate from the initial object used during `init()` call.  
+
+- `contact` and `subject` are values provided during certificate creation
+- `error` in all cases is optional property and will be set if case of an error.  
+- `issuer` will always be LetsEncrypt authority.  
+- `createdAt`, `notBefore` and `notAfter` are date objects specifying certificate issue date and validity (start and end date).  
+
+      const ssl = await piacme.parseCert();
+      ssl: {
+        account: { error?, contact, createdAt },
+        serverKey: { error? },
+        accountKey: { error? },
+        fullChain: { error?, subject, issuer, notBefore, notAfter }
+      }
