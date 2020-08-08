@@ -17,9 +17,14 @@
     "registry": "https://registry.npmjs.org/"
   },
   "keywords": [
-    "ACME",
-    "LetsEncrypt",
-    "SSL"
+    "x509",
+    "csr",
+    "certificate",
+    "acme",
+    "letsencrypt",
+    "ssl",
+    "https",
+    "http2"
   ],
   "author": "Vladimir Mandic <mandic00@live.com>",
   "license": "MIT",
@@ -32,7 +37,7 @@
     "@root/csr": "^0.8.1",
     "@root/keypairs": "^0.9.0",
     "@root/pem": "^1.0.4",
-    "@vladmandic/pilogger": "^0.1.5",
+    "@vladmandic/pilogger": "^0.1.7",
     "acme-http-01-webroot": "^3.0.0",
     "moment": "^2.27.0",
     "x509.js": "^1.0.0"
