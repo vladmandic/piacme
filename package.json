@@ -1,6 +1,6 @@
 {
   "name": "@vladmandic/piacme",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "description": "Simple ACME/LetsEncrypt HTTP/SSL Certificate Management",
   "main": "piacme.js",
   "engines": {
@@ -37,14 +37,14 @@
     "@root/csr": "^0.8.1",
     "@root/keypairs": "^0.9.0",
     "@root/pem": "^1.0.4",
-    "@vladmandic/pilogger": "^0.1.7",
+    "@vladmandic/pilogger": "^0.1.11",
     "acme-http-01-webroot": "^3.0.0",
     "moment": "^2.27.0",
     "x509.js": "^1.0.0"
   },
   "devDependencies": {
-    "eslint": "^7.6.0",
-    "eslint-plugin-import": "^2.22.0",
-    "eslint-config-airbnb-base": "^14.2.0"
+    "eslint": "^7.7.0",
+    "eslint-config-airbnb-base": "^14.2.0",
+    "eslint-plugin-import": "^2.22.0"
   }
 }
