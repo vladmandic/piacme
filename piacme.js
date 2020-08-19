@@ -198,7 +198,7 @@ async function parseCert() {
 
 async function checkCert() {
   if (fs.existsSync(config.fullChain)) {
-    if (initial) log.info('ACME certificate: check:', config.fullChain);
+    if (initial) log.info('ACME certificate check:', config.fullChain);
     const ssl = await parseCert();
     const now = new Date();
     if (!ssl.account || ssl.account.error) {
@@ -238,13 +238,13 @@ async function getCert() {
   if (initial) {
     const ssl = await parseCert();
     if (ssl.account && !ssl.account.error) {
-      log.info(`SSL account: ${ssl.account.contact} created: ${moment(ssl.account.createdAt).format('YYYY-MM-DD HH:mm:ss')} `);
+      log.info(`SSL account: ${ssl.account.contact} Created: ${moment(ssl.account.createdAt).format('YYYY-MM-DD HH:mm:ss')} `);
     } else log.warn(`SSL account error: ${ssl.account.error}`);
     if (ssl.serverKey && !ssl.serverKey.error && ssl.accountKey && !ssl.accountKey.error) {
-      log.info(`SSL keys server:${ssl.serverKey.type} account:${ssl.accountKey.type} `);
-    } else log.warn(`SSL keys error server:${ssl.serverKey.error} account:${ssl.account.error}`);
+      log.info(`SSL keys server: ${ssl.serverKey.type} Account: ${ssl.accountKey.type} `);
+    } else log.warn(`SSL keys error server: ${ssl.serverKey.error} Account: ${ssl.account.error}`);
     if (ssl.fullChain && !ssl.fullChain.error) {
-      log.info(`SSL certificate subject:${ssl.fullChain.subject} issuer:${ssl.fullChain.issuer}`);
+      log.info(`SSL certificate subject: ${ssl.fullChain.subject} Issuer: ${ssl.fullChain.issuer}`);
     } else log.warn(`SSL certificate error: ${ssl.fullChain.error}`);
     config.SSL = { Key: `../${config.ServerKeyFile}`, Crt: `../${config.fullChain}` };
     initial = false;
@@ -254,7 +254,7 @@ async function getCert() {
 
 async function monitorCert() {
   await getCert();
-  log.state(`SSL certificate expires in ${config.days.toFixed(1)} days, ${config.days <= 3 ? 'renewing now' : 'skipping renewal'}`);
+  log.state('SSL certificate expires in', config.days.toFixed(1), `days: ${config.days <= 3 ? 'renewing now' : 'skipping renewal'}`);
   setTimeout(() => monitorCert(), 1000 * 60 * 60 * 12);
 }
 
