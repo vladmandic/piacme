@@ -32,11 +32,13 @@ Initialize PiACME by passing a configuration object:
     ServerKeyFile: './cert//private.pem',
     // file where server certificate will be stored
     fullChain: './cert/fullchain.pem',
+    // attempt renewal how many days before expiration
+    renewDays: 10,
   };
 
   const piacme = require('piacme');
   piacme.init(config);
-  const { Key, Crt } = await acme.getCert();
+  const { Key, Crt } = await piacme.getCert();
 ```
 
 That's it!  
@@ -91,9 +93,16 @@ Next, it calls `parseCert()` and parses cetificate details for validity before r
 To monitor certificate, call `monitorCert()` which updates object initially passed using `init()` call by triggering `getCert()` every 12 hours.  
 Usefull for certfificates with short lifespan that require freqent renewals.
 
-  piacme.monitorCert();
+```js
+piacme.monitorCert();`
+```
 
-(RFE: *Implement monitoring callback that can be used to automatically restart web server as needed*)
+or with a provided callback function that `monitorCert()` will call if certificate changes.
+
+```js
+  function f() { /* do something here */ };
+  piacme.monitorCert(f)
+```
 
 To get certificate details, call `parseCert()` and it will parse certificate from the initial object used during `init()` call.  
 

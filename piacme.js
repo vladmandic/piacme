@@ -24,11 +24,13 @@ let config = {
   accountKeyFile: './cert/account.pem',
   ServerKeyFile: './cert//private.pem',
   fullChain: './cert/fullchain.pem',
+  renewDays: 10,
 };
 
 // internal variables
 let acme;
 let initial = true;
+let callback = null;
 const auth = [];
 
 function notify(evt, msg) {
@@ -222,7 +224,7 @@ async function checkCert() {
       return false;
     }
     config.days = (ssl.fullChain.notAfter - now) / 1000 / 60 / 60 / 24;
-    if (config.days > 3) return true;
+    if (config.days > config.renewDays) return true;
     return false;
   }
   log.warn(`SSL certificate does not exist: ${config.fullChain}`);
@@ -234,6 +236,10 @@ async function getCert() {
   if (!certOk) {
     await createKeys(); // used to initialize account; typically genrates only once per server lifetime otherwise load existing
     await createCert(); // used to initialize certificate; typically genrates if cert doesn't exist or is about to expire
+    if (callback) {
+      callback();
+      callback = null;
+    }
   }
   if (initial) {
     const ssl = await parseCert();
@@ -252,9 +258,10 @@ async function getCert() {
   return config.SSL;
 }
 
-async function monitorCert() {
+async function monitorCert(f = null) {
+  callback = f;
   await getCert();
-  log.state('SSL certificate expires in', config.days.toFixed(1), `days: ${config.days <= 3 ? 'renewing now' : 'skipping renewal'}`);
+  log.state('SSL certificate expires in', config.days.toFixed(1), `days: ${config.days <= config.renewDays ? 'renewing now' : 'skipping renewal'}`);
   setTimeout(() => monitorCert(), 1000 * 60 * 60 * 12);
 }
 
