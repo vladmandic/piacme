@@ -13,6 +13,6 @@
       "airbnb-base"
   ],
   "rules": {
-    "max-len": [1, 160, 3]
+    "max-len": [1, 200, 3]
   }
 }

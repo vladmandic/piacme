@@ -24,7 +24,9 @@ let config = {
   accountKeyFile: './cert/account.pem',
   ServerKeyFile: './cert//private.pem',
   fullChain: './cert/fullchain.pem',
+  monitorInterval: 60 * 12,
   renewDays: 10,
+  debug: false,
 };
 
 // internal variables
@@ -34,7 +36,7 @@ let callback = null;
 const auth = [];
 
 function notify(evt, msg) {
-  log.data('ACME notification:', evt, msg);
+  if (config.debug) log.data('ACME notification:', evt, msg);
   let key;
   if (msg.challenge && msg.challenge.keyAuthorization) key = msg.challenge.keyAuthorization;
   let token;
@@ -70,7 +72,7 @@ async function createCert(force = false) {
         res.writeHead(200);
         res.write(key.key);
         res.end();
-        log.info(`Challenge for: ${key.host} request:${req.url} sent:${key.key}`);
+        if (config.debug) log.info(`Challenge for: ${key.host} request:${req.url} sent:${key.key}`);
       } else {
         log.info(`Challenge for: ${key.host} request:${req.url} unknown`);
       }
@@ -115,7 +117,7 @@ async function createCert(force = false) {
 
 async function createKeys() {
   initial = true;
-  log.info('ACME create server keys');
+  log.info('ACME get server keys');
   // initialize acme
   const packageAgent = config.application;
   acme = ACME.create({ maintainerEmail: config.maintainer, packageAgent, notify });
@@ -143,7 +145,7 @@ async function createKeys() {
     await fs.promises.writeFile(config.accountFile, JSON.stringify(config.account), 'ascii');
   } else {
     log.info('ACME Account: load', config.accountFile);
-    const json = await fs.promises.readFile(config.accountFile, JSON.stringify(config.account), 'ascii');
+    const json = await fs.promises.readFile(config.accountFile, 'ascii');
     config.account = JSON.parse(json);
   }
 
@@ -223,19 +225,25 @@ async function checkCert() {
       log.warn(`ACME certificate invalid notAfter: ${ssl.fullChain.notAfter}`);
       return false;
     }
-    config.days = (ssl.fullChain.notAfter - now) / 1000 / 60 / 60 / 24;
-    if (config.days > config.renewDays) return true;
-    return false;
+    config.remainingDays = (ssl.fullChain.notAfter - now) / 1000 / 60 / 60 / 24;
+    log.state('SSL certificate expires in', config.remainingDays.toFixed(1), `days: ${config.remainingDays < config.renewDays ? 'renewing now' : 'skipping renewal'}`);
+    if (config.remainingDays < config.renewDays) return false;
+    return true;
   }
   log.warn(`SSL certificate does not exist: ${config.fullChain}`);
   return false;
 }
 
 async function getCert() {
-  const certOk = await checkCert(); // check existing cert for validity and expiration
+  let certOk = false;
+  certOk = await checkCert(); // check existing cert for validity and expiration
   if (!certOk) {
     await createKeys(); // used to initialize account; typically genrates only once per server lifetime otherwise load existing
-    await createCert(); // used to initialize certificate; typically genrates if cert doesn't exist or is about to expire
+    await createCert(true); // used to initialize certificate; typically genrates if cert doesn't exist or is about to expire
+    certOk = await checkCert(); // check again
+    if (!certOk) {
+      log.error('SSL certificate did not pass validation');
+    }
     if (callback) {
       callback();
       callback = null;
@@ -259,14 +267,15 @@ async function getCert() {
 }
 
 async function monitorCert(f = null) {
-  callback = f;
-  await getCert();
-  log.state('SSL certificate expires in', config.days.toFixed(1), `days: ${config.days <= config.renewDays ? 'renewing now' : 'skipping renewal'}`);
-  setTimeout(() => monitorCert(), 1000 * 60 * 60 * 12);
+  setTimeout(async () => {
+    callback = f;
+    await getCert();
+    log.state('SSL monitor certificate check complete');
+  }, 1000 * 60 * config.monitorInterval);
 }
 
 function initConfig(userConfig) {
-  config = userConfig;
+  config = { ...config, ...userConfig };
 }
 
 async function test() {

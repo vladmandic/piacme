@@ -32,8 +32,12 @@ Initialize PiACME by passing a configuration object:
     ServerKeyFile: './cert//private.pem',
     // file where server certificate will be stored
     fullChain: './cert/fullchain.pem',
-    // attempt renewal how many days before expiration
-    renewDays: 10,
+    // attempt renewal how many days before expiration, default: 10 days
+    renewDays: 14,
+    // how often to check certificate validity in minutes, default: 720 (12 hours)
+    monitorInterval: 60 * 12,
+    // increase verbosity, default: false
+    debug: false,
   };
 
   const piacme = require('piacme');
