@@ -2,12 +2,13 @@
   "name": "@vladmandic/piacme",
   "version": "0.1.11",
   "description": "Simple ACME/LetsEncrypt HTTP/SSL Certificate Management",
-  "main": "piacme.js",
+  "main": "dist/piacme.js",
   "engines": {
     "node": ">=12.0.0"
   },
   "scripts": {
-    "lint": "eslint *.js"
+    "build": "esbuild --outdir=dist --target=es2018 --platform=node --format=cjs --color=true --log-level=error --bundle src/piacme.js",
+    "lint": "eslint src/piacme.js"
   },
   "repository": {
     "type": "git",
@@ -38,13 +39,16 @@
     "@root/csr": "^0.8.1",
     "@root/keypairs": "^0.9.0",
     "@root/pem": "^1.0.4",
-    "@vladmandic/pilogger": "^0.1.11",
+    "@vladmandic/pilogger": "^0.2.3",
     "acme-http-01-webroot": "^3.0.0",
-    "moment": "^2.27.0",
+    "moment": "^2.29.0",
+    "node-forge": "^0.10.0",
+    "ursa-optional": "^0.10.1",
     "x509.js": "^1.0.0"
   },
   "devDependencies": {
-    "eslint": "^7.8.1",
+    "esbuild": "^0.7.6",
+    "eslint": "^7.9.0",
     "eslint-config-airbnb-base": "^14.2.0",
     "eslint-plugin-import": "^2.22.0"
   }
