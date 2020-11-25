@@ -284,14 +284,16 @@ async function test() {
   log.data('Parsed details:', details);
 }
 
-if (!module.parent) {
-  test();
-} else {
-  exports.init = initConfig;
-  exports.getCert = getCert;
-  exports.parseCert = parseCert;
-  exports.checkCert = checkCert;
-  exports.createKeys = createKeys;
-  exports.createCert = createCert;
-  exports.monitorCert = monitorCert;
+try {
+  if (require.main === module) test();
+} catch {
+  //
 }
+
+exports.init = initConfig;
+exports.getCert = getCert;
+exports.parseCert = parseCert;
+exports.checkCert = checkCert;
+exports.createKeys = createKeys;
+exports.createCert = createCert;
+exports.monitorCert = monitorCert;
