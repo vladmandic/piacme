@@ -39,7 +39,7 @@
     "@root/csr": "^0.8.1",
     "@root/keypairs": "^0.10.1",
     "@root/pem": "^1.0.4",
-    "@vladmandic/pilogger": "^0.2.9",
+    "@vladmandic/pilogger": "^0.2.10",
     "acme-http-01-webroot": "^3.0.0",
     "moment": "^2.29.1",
     "node-forge": "^0.10.0",
