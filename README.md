@@ -1,6 +1,4 @@
-# piacme
-
-Simple ACME/LetsEncrypt HTTP/SSL Certificate Management
+# PiACME: Simple ACME/LetsEncrypt HTTP/SSL Certificate Management
 
 ## Why
 

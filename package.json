@@ -47,8 +47,8 @@
     "x509.js": "^1.0.0"
   },
   "devDependencies": {
-    "esbuild": "^0.8.15",
-    "eslint": "^7.14.0",
+    "esbuild": "^0.8.22",
+    "eslint": "^7.15.0",
     "eslint-config-airbnb-base": "^14.2.1",
     "eslint-plugin-import": "^2.22.1"
   }
