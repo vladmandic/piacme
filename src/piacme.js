@@ -46,7 +46,9 @@ function notify(evt, msg) {
 }
 
 function sleep(timer = 100) {
-  return new Promise((resolve) => { setTimeout(() => resolve(), timer); });
+  return new Promise((resolve) => {
+    setTimeout(() => resolve(true), timer);
+  });
 }
 
 async function createCert(force = false) {
@@ -57,6 +59,7 @@ async function createCert(force = false) {
     log.info('ACME create certificate');
     // what are we requesting
     const csrDer = await CSR.csr({ jwk: config.key, domains: config.domains, encoding: 'der' });
+    // @ts-ignore
     const csr = PEM.packBlock({ type: 'CERTIFICATE REQUEST', bytes: csrDer });
 
     // prepare challenge verification object
@@ -67,7 +70,7 @@ async function createCert(force = false) {
     const server = http.createServer(async (req, res) => {
       // eslint-disable-next-line no-await-in-loop
       while (auth.length < config.domains.length) await sleep(100); // wait until key gets populated in notification
-      const key = auth.find((a) => req.url.includes(a.token));
+      const key = auth.find((a) => req?.url?.includes(a.token));
       if (key) {
         res.writeHead(200);
         res.write(key.key);
@@ -217,14 +220,17 @@ async function checkCert() {
       log.warn(`SSL certificate error: ${ssl.fullChain.error}`);
       return false;
     }
+    // @ts-ignore
     if (!ssl.fullChain.notBefore || (now - ssl.fullChain.notBefore < 0)) {
       log.warn(`ACME certificate invalid notBefore: ${ssl.fullChain.notBefore}`);
       return false;
     }
+    // @ts-ignore
     if (!ssl.fullChain.notAfter || (now - ssl.fullChain.notAfter > 0)) {
       log.warn(`ACME certificate invalid notAfter: ${ssl.fullChain.notAfter}`);
       return false;
     }
+    // @ts-ignore
     config.remainingDays = (ssl.fullChain.notAfter - now) / 1000 / 60 / 60 / 24;
     log.state('SSL certificate expires in', config.remainingDays.toFixed(1), `days: ${config.remainingDays < config.renewDays ? 'renewing now' : 'skipping renewal'}`);
     if (config.remainingDays < config.renewDays) return false;

@@ -1519,7 +1519,7 @@ var require_pilogger = __commonJS((exports2, module2) => {
       typeof exports22 == "object" && typeof module22 != "undefined" ? module22.exports = e() : typeof define == "function" && define.amd ? define(e) : t2.dayjs = e();
     }(exports22, function() {
       "use strict";
-      var t2 = "millisecond", e = "second", n = "minute", r = "hour", i = "day", s2 = "week", u2 = "month", a = "quarter", o = "year", f2 = "date", h2 = /^(\d{4})[-/]?(\d{1,2})?[-/]?(\d{0,2})[^0-9]*(\d{1,2})?:?(\d{1,2})?:?(\d{1,2})?.?(\d+)?$/, c = /\[([^\]]+)]|Y{2,4}|M{1,4}|D{1,2}|d{1,4}|H{1,2}|h{1,2}|a|A|m{1,2}|s{1,2}|Z{1,2}|SSS/g, d = {name: "en", weekdays: "Sunday_Monday_Tuesday_Wednesday_Thursday_Friday_Saturday".split("_"), months: "January_February_March_April_May_June_July_August_September_October_November_December".split("_")}, $2 = function(t22, e2, n2) {
+      var t2 = "millisecond", e = "second", n = "minute", r = "hour", i = "day", s2 = "week", u2 = "month", a = "quarter", o = "year", f2 = "date", h2 = /^(\d{4})[-/]?(\d{1,2})?[-/]?(\d{0,2})[^0-9]*(\d{1,2})?:?(\d{1,2})?:?(\d{1,2})?\.?(\d+)?$/, c = /\[([^\]]+)]|Y{1,4}|M{1,4}|D{1,2}|d{1,4}|H{1,2}|h{1,2}|a|A|m{1,2}|s{1,2}|Z{1,2}|SSS/g, d = {name: "en", weekdays: "Sunday_Monday_Tuesday_Wednesday_Thursday_Friday_Saturday".split("_"), months: "January_February_March_April_May_June_July_August_September_October_November_December".split("_")}, $2 = function(t22, e2, n2) {
         var r2 = String(t22);
         return !r2 || r2.length >= e2 ? t22 : "" + Array(e2 + 1 - r2.length).join(n2) + t22;
       }, l = {s: $2, z: function(t22) {
@@ -1709,7 +1709,7 @@ var require_pilogger = __commonJS((exports2, module2) => {
           return this.$g(e2, t22[0], t22[1]);
         };
       }), v.extend = function(t22, e2) {
-        return t22(e2, S, v), v;
+        return t22.$i || (t22(e2, S, v), t22.$i = true), v;
       }, v.locale = D2, v.isDayjs = m2, v.unix = function(t22) {
         return v(1e3 * t22);
       }, v.en = M2[y], v.Ls = M2, v.p = {}, v;
@@ -1761,7 +1761,6 @@ var require_pilogger = __commonJS((exports2, module2) => {
     stdout: process.stdout,
     stderr: process.stderr,
     ignoreErrors: true,
-    groupIndentation: 2,
     inspectOptions
   });
   function setDateFormat(dt) {
@@ -1817,14 +1816,14 @@ var require_pilogger = __commonJS((exports2, module2) => {
     const t1 = process.hrtime.bigint();
     let elapsed = 0;
     try {
-      elapsed = parseInt(t1 - t0, 10);
+      elapsed = parseInt((t1 - t0).toString());
     } catch (e) {
     }
-    elapsed = Math.round(elapsed / 1e6).toLocaleString();
+    elapsed = Math.round(elapsed / 1e6);
     const time = dayjs(Date.now()).format(dateFormat);
-    logger.log(time, tags.timed, `${elapsed} ms`, ...messages);
+    logger.log(time, tags.timed, `${elapsed.toLocaleString()} ms`, ...messages);
     if (logFileOK)
-      logStream.write(`${tags.timed} ${time} ${elapsed} ms ${combineMessages(...messages)}
+      logStream.write(`${tags.timed} ${time} ${elapsed.toLocaleString()} ms ${combineMessages(...messages)}
 `);
   }
   async function log2(tag, ...messages) {
@@ -1868,7 +1867,6 @@ var require_pilogger = __commonJS((exports2, module2) => {
       stdout: process.stdout,
       stderr: process.stderr,
       ignoreErrors: true,
-      groupIndentation: 2,
       inspectOptions
     });
   }
@@ -1876,7 +1874,7 @@ var require_pilogger = __commonJS((exports2, module2) => {
     const f2 = "./package.json";
     if (!fs2.existsSync(f2))
       return;
-    const node2 = JSON.parse(fs2.readFileSync(f2));
+    const node2 = JSON.parse(fs2.readFileSync(f2).toString());
     process.title = node2.name;
     log2("info", node2.name, "version", node2.version);
     log2("info", "User:", os.userInfo().username, "Platform:", process.platform, "Arch:", process.arch, "Node:", process.version);
@@ -1892,7 +1890,7 @@ var require_pilogger = __commonJS((exports2, module2) => {
     const t0 = process.hrtime.bigint();
     log2("info", "Color support:", chalk.supportsColor);
     setTimeout(() => timed(t0, "Test function execution"), 1e3);
-    const node2 = JSON.parse(fs2.readFileSync("./package.json"));
+    const node2 = JSON.parse(fs2.readFileSync("./package.json").toString());
     logger.log(node2);
   }
   try {
@@ -6294,9 +6292,10 @@ var require_generate_privkey_node = __commonJS((exports2, module2) => {
     return result;
   };
   if (require.main === module2) {
-    var keypair = module2.exports(2048, 65537);
+    keypair = module2.exports(2048, 65537);
     console.info(keypair.privateKeyPem);
   }
+  var keypair;
 });
 
 // node_modules/file-uri-to-path/index.js
@@ -6911,9 +6910,10 @@ var require_generate_privkey_ursa = __commonJS((exports2, module2) => {
     return result;
   };
   if (require.main === module2) {
-    var keypair = module2.exports(2048, 65537);
+    keypair = module2.exports(2048, 65537);
     console.info(keypair.privateKeyPem);
   }
+  var keypair;
 });
 
 // node_modules/node-forge/lib/forge.js
@@ -14112,8 +14112,9 @@ var require_rsa = __commonJS((exports2, module2) => {
   require_random();
   require_util();
   if (typeof BigInteger === "undefined") {
-    var BigInteger = forge.jsbn.BigInteger;
+    BigInteger = forge.jsbn.BigInteger;
   }
+  var BigInteger;
   var _crypto = forge.util.isNodejs ? require("crypto") : null;
   var asn1 = forge.asn1;
   var util = forge.util;
@@ -15057,8 +15058,9 @@ var require_pbe = __commonJS((exports2, module2) => {
   require_rsa();
   require_util();
   if (typeof BigInteger === "undefined") {
-    var BigInteger = forge.jsbn.BigInteger;
+    BigInteger = forge.jsbn.BigInteger;
   }
+  var BigInteger;
   var asn1 = forge.asn1;
   var pki = forge.pki = forge.pki || {};
   module2.exports = pki.pbe = forge.pbe = forge.pbe || {};
@@ -21321,8 +21323,9 @@ var require_ed25519 = __commonJS((exports2, module2) => {
   var publicKeyValidator = asn1Validator.publicKeyValidator;
   var privateKeyValidator = asn1Validator.privateKeyValidator;
   if (typeof BigInteger === "undefined") {
-    var BigInteger = forge.jsbn.BigInteger;
+    BigInteger = forge.jsbn.BigInteger;
   }
+  var BigInteger;
   var ByteBuffer = forge.util.ByteBuffer;
   var NativeBuffer = typeof Buffer === "undefined" ? Uint8Array : Buffer;
   forge.pki = forge.pki || {};
@@ -22466,12 +22469,13 @@ var require_log = __commonJS((exports2, module2) => {
   forge.log.NO_LEVEL_CHECK = 1 << 2;
   forge.log.INTERPOLATE = 1 << 3;
   for (var i = 0; i < forge.log.levels.length; ++i) {
-    var level = forge.log.levels[i];
+    level = forge.log.levels[i];
     sLevelInfo[level] = {
       index: i,
       name: level.toUpperCase()
     };
   }
+  var level;
   forge.log.logMessage = function(message) {
     var messageLevelIndex = sLevelInfo[message.level].index;
     for (var i2 = 0; i2 < sLoggers.length; ++i2) {
@@ -22505,7 +22509,7 @@ var require_log = __commonJS((exports2, module2) => {
     }
   };
   if (true) {
-    var levels = ["error", "warning", "info", "debug", "verbose"];
+    levels = ["error", "warning", "info", "debug", "verbose"];
     for (var i = 0; i < levels.length; ++i) {
       (function(level2) {
         forge.log[level2] = function(category, message) {
@@ -22522,6 +22526,7 @@ var require_log = __commonJS((exports2, module2) => {
       })(levels[i]);
     }
   }
+  var levels;
   forge.log.makeLogger = function(logFunction) {
     var logger2 = {
       flags: 0,
@@ -22555,16 +22560,15 @@ var require_log = __commonJS((exports2, module2) => {
     sLoggers.push(logger2);
   };
   if (typeof console !== "undefined" && "log" in console) {
-    var logger;
     if (console.error && console.warn && console.info && console.debug) {
-      var levelHandlers = {
+      levelHandlers = {
         error: console.error,
         warning: console.warn,
         info: console.info,
         debug: console.debug,
         verbose: console.debug
       };
-      var f2 = function(logger2, message) {
+      f2 = function(logger2, message) {
         forge.log.prepareStandard(message);
         var handler = levelHandlers[message.level];
         var args = [message.standard];
@@ -22573,7 +22577,7 @@ var require_log = __commonJS((exports2, module2) => {
       };
       logger = forge.log.makeLogger(f2);
     } else {
-      var f2 = function(logger2, message) {
+      f2 = function(logger2, message) {
         forge.log.prepareStandardFull(message);
         console.log(message.standardFull);
       };
@@ -22588,18 +22592,23 @@ var require_log = __commonJS((exports2, module2) => {
       }
     };
   }
+  var logger;
+  var levelHandlers;
+  var f2;
   if (sConsoleLogger !== null) {
-    var query = forge.util.getQueryVariables();
+    query = forge.util.getQueryVariables();
     if ("console.level" in query) {
       forge.log.setLevel(sConsoleLogger, query["console.level"].slice(-1)[0]);
     }
     if ("console.lock" in query) {
-      var lock = query["console.lock"].slice(-1)[0];
+      lock = query["console.lock"].slice(-1)[0];
       if (lock == "true") {
         forge.log.lock(sConsoleLogger);
       }
     }
   }
+  var query;
+  var lock;
   forge.log.consoleLogger = sConsoleLogger;
 });
 
@@ -23827,10 +23836,11 @@ var require_generate_privkey_forge = __commonJS((exports2, module2) => {
     return Buffer.from(hex, "hex").toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
   }
   if (require.main === module2) {
-    var keypair = module2.exports(2048, 65537);
+    keypair = module2.exports(2048, 65537);
     console.info(keypair.private);
     console.warn(keypair.public);
   }
+  var keypair;
 });
 
 // node_modules/@root/acme/node_modules/@root/keypairs/lib/node/generate-privkey.js
@@ -23888,9 +23898,10 @@ var require_generate_privkey = __commonJS((exports2, module2) => {
     }
   };
   if (require.main === module2) {
-    var keypair = module2.exports(2048, 65537);
+    keypair = module2.exports(2048, 65537);
     console.info(keypair.privateKeyPem);
   }
+  var keypair;
 });
 
 // node_modules/@root/acme/node_modules/@root/keypairs/lib/node/rsa.js
@@ -24761,9 +24772,10 @@ var require_generate_privkey_node2 = __commonJS((exports2, module2) => {
     return result;
   };
   if (require.main === module2) {
-    var keypair = module2.exports(2048, 65537);
+    keypair = module2.exports(2048, 65537);
     console.info(keypair.privateKeyPem);
   }
+  var keypair;
 });
 
 // node_modules/@root/keypairs/lib/node/generate-privkey-ursa.js
@@ -24783,9 +24795,10 @@ var require_generate_privkey_ursa2 = __commonJS((exports2, module2) => {
     return result;
   };
   if (require.main === module2) {
-    var keypair = module2.exports(2048, 65537);
+    keypair = module2.exports(2048, 65537);
     console.info(keypair.privateKeyPem);
   }
+  var keypair;
 });
 
 // node_modules/@root/keypairs/lib/node/generate-privkey-forge.js
@@ -24827,10 +24840,11 @@ var require_generate_privkey_forge2 = __commonJS((exports2, module2) => {
     return Buffer.from(hex, "hex").toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
   }
   if (require.main === module2) {
-    var keypair = module2.exports(2048, 65537);
+    keypair = module2.exports(2048, 65537);
     console.info(keypair.private);
     console.warn(keypair.public);
   }
+  var keypair;
 });
 
 // node_modules/@root/keypairs/lib/node/generate-privkey.js
@@ -24888,9 +24902,10 @@ var require_generate_privkey2 = __commonJS((exports2, module2) => {
     }
   };
   if (require.main === module2) {
-    var keypair = module2.exports(2048, 65537);
+    keypair = module2.exports(2048, 65537);
     console.info(keypair.privateKeyPem);
   }
+  var keypair;
 });
 
 // node_modules/@root/keypairs/lib/node/rsa.js
@@ -26975,14 +26990,16 @@ var require_maintainers = __commonJS((exports2, module2) => {
     }, me2.__timeout || 3e3);
   };
   if (require.main === module2) {
-    var ACME2 = require_acme();
-    var acme2 = ACME2.create({
+    ACME2 = require_acme();
+    acme2 = ACME2.create({
       maintainerEmail: "aj+acme-test@rootprojects.org",
       packageAgent: "test/v0",
       __timeout: 100
     });
     M2.init(acme2);
   }
+  var ACME2;
+  var acme2;
 });
 
 // node_modules/@root/acme/acme.js
@@ -27988,7 +28005,7 @@ var require_em_x509 = __commonJS((exports, module) => {
     t.printErr || (t.printErr = function(a) {
       process.stderr.write(a + "\n");
     });
-    var ha = require("fs"), ia = require("path");
+    ha = require("fs"), ia = require("path");
     t.read = function(a, b) {
       var a = ia.normalize(a), c = ha.readFileSync(a);
       !c && a != ia.resolve(a) && (a = path.join(__dirname, "..", "src", a), c = ha.readFileSync(a));
@@ -28026,6 +28043,8 @@ var require_em_x509 = __commonJS((exports, module) => {
     }), t.printErr || (t.printErr = function(a) {
       console.log(a);
     })) : t.print || (t.print = q()), ea ? window.Module = t : t.load = importScripts) : f("Unknown runtime environment. Where are we?");
+  var ha;
+  var ia;
   function ja(a) {
     eval.call(m, a);
   }
@@ -132509,7 +132528,7 @@ var require_em_x509 = __commonJS((exports, module) => {
   yd = $;
   if (mb)
     if (typeof t.locateFile === "function" ? mb = t.locateFile(mb) : t.memoryInitializerPrefixURL && (mb = t.memoryInitializerPrefixURL + mb), da || ga) {
-      var df = t.readBinary(mb);
+      df = t.readBinary(mb);
       J.set(df, Oa);
     } else
       kb(), Tb(mb, function(a) {
@@ -132518,6 +132537,7 @@ var require_em_x509 = __commonJS((exports, module) => {
       }, function() {
         f("could not load memory initializer " + mb);
       });
+  var df;
   function ka(a) {
     this.name = "ExitStatus";
     this.message = "Program terminated with exit(" + a + ")";
@@ -132718,7 +132738,7 @@ function notify(evt, msg) {
 }
 function sleep(timer = 100) {
   return new Promise((resolve) => {
-    setTimeout(() => resolve(), timer);
+    setTimeout(() => resolve(true), timer);
   });
 }
 async function createCert(force = false) {
@@ -132733,7 +132753,10 @@ async function createCert(force = false) {
     const server = http.createServer(async (req, res) => {
       while (auth.length < config.domains.length)
         await sleep(100);
-      const key = auth.find((a) => req.url.includes(a.token));
+      const key = auth.find((a) => {
+        var _a;
+        return (_a = req == null ? void 0 : req.url) == null ? void 0 : _a.includes(a.token);
+      });
       if (key) {
         res.writeHead(200);
         res.write(key.key);
