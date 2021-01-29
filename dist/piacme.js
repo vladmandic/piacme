@@ -25958,30 +25958,32 @@ var require_csr = __commonJS((exports2, module2) => {
 // node_modules/@root/request/package.json
 var require_package = __commonJS((exports2, module2) => {
   module2.exports = {
-    _from: "@root/request@^1.3.11",
-    _id: "@root/request@1.6.1",
+    _from: "@root/request@1.7.0",
+    _id: "@root/request@1.7.0",
     _inBundle: false,
-    _integrity: "sha512-8wrWyeBLRp7T8J36GkT3RODJ6zYmL0/maWlAUD5LOXT28D3TDquUepyYDKYANNA3Gc8R5ZCgf+AXvSTYpJEWwQ==",
+    _integrity: "sha512-lre7XVeEwszgyrayWWb/kRn5fuJfa+n0Nh+rflM9E+EpC28yIYA+FPm/OL1uhzp3TxhQM0HFN4FE2RDIPGlnmg==",
     _location: "/@root/request",
     _phantomChildren: {},
     _requested: {
-      type: "range",
+      type: "version",
       registry: true,
-      raw: "@root/request@^1.3.11",
+      raw: "@root/request@1.7.0",
       name: "@root/request",
       escapedName: "@root%2frequest",
       scope: "@root",
-      rawSpec: "^1.3.11",
+      rawSpec: "1.7.0",
       saveSpec: null,
-      fetchSpec: "^1.3.11"
+      fetchSpec: "1.7.0"
     },
     _requiredBy: [
+      "#USER",
+      "/",
       "/@root/acme"
     ],
-    _resolved: "https://registry.npmjs.org/@root/request/-/request-1.6.1.tgz",
-    _shasum: "c9811180ef6d2d035ad79bd135bdd2ae3db22e97",
-    _spec: "@root/request@^1.3.11",
-    _where: "/home/vlado/dev/piacme/node_modules/@root/acme",
+    _resolved: "https://registry.npmjs.org/@root/request/-/request-1.7.0.tgz",
+    _shasum: "d9be84c82201e64a2578323e98704cb79dd8dd74",
+    _spec: "@root/request@1.7.0",
+    _where: "/home/vlado/dev/piacme",
     author: {
       name: "AJ ONeal",
       email: "coolaj86@gmail.com",
@@ -26014,7 +26016,7 @@ var require_package = __commonJS((exports2, module2) => {
     scripts: {
       test: 'echo "Error: no test specified" && exit 1'
     },
-    version: "1.6.1"
+    version: "1.7.0"
   };
 });
 
@@ -26026,6 +26028,7 @@ var require_request = __commonJS((exports2, module2) => {
   var url = require("url");
   var os = require("os");
   var pkg = require_package();
+  var fs2 = require("fs");
   function debug() {
     if (module2.exports.debug) {
       console.log.apply(console, arguments);
@@ -26127,6 +26130,58 @@ var require_request = __commonJS((exports2, module2) => {
             return urequestHelper(opts, cb2);
           }
         }
+        if (opts.stream) {
+          var resolve;
+          var reject;
+          resp.stream = new Promise(function(_resolve, _reject) {
+            resolve = _resolve;
+            reject = _reject;
+          });
+          if (typeof opts.stream === "string") {
+            try {
+              if (opts.debug) {
+                console.debug("[@root/request] file write stream created");
+              }
+              opts.stream = fs2.createWriteStream(opts.stream);
+            } catch (e) {
+              cb2(e);
+            }
+          }
+          if (typeof opts.stream.pipe === "function") {
+            if (opts.debug) {
+              console.debug("[@root/request] stream piped");
+            }
+            resp.pipe(opts.stream);
+          }
+          resp.on("error", function(e) {
+            if (opts.debug) {
+              console.debug("[@root/request] stream 'error'");
+              console.error(e.stack);
+            }
+            resp.destroy();
+            if (opts.stream.destroy === "function") {
+              opts.stream.destroy(e);
+            }
+            reject(e);
+          });
+          resp.on("end", function() {
+            if (opts.debug) {
+              console.debug("[@root/request] stream 'end'");
+            }
+            if (opts.stream.destroy === "function") {
+              opts.stream.end();
+              opts.stream.destroy();
+            }
+          });
+          resp.on("close", function() {
+            if (opts.debug) {
+              console.debug("[@root/request] stream 'close'");
+            }
+            resolve();
+          });
+          cb2(null, resp);
+          return;
+        }
         if (opts.encoding === null) {
           resp._body = [];
         } else {
@@ -26157,7 +26212,9 @@ var require_request = __commonJS((exports2, module2) => {
             }
           }
           debug("\n[urequest] resp.toJSON():");
-          debug(resp.toJSON());
+          if (module2.exports.debug) {
+            debug(resp.toJSON());
+          }
           if (opts.debug) {
             console.debug("[@root/request] Response Body:");
             console.debug(resp.body);
@@ -26444,6 +26501,7 @@ var require_request = __commonJS((exports2, module2) => {
   module2.exports = setDefaults(_defaults);
   module2.exports._keys = Object.keys(_defaults).concat([
     "encoding",
+    "stream",
     "body",
     "json",
     "form",
