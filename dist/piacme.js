@@ -1519,7 +1519,7 @@ var require_pilogger = __commonJS((exports2, module2) => {
       typeof exports22 == "object" && typeof module22 != "undefined" ? module22.exports = e() : typeof define == "function" && define.amd ? define(e) : t2.dayjs = e();
     }(exports22, function() {
       "use strict";
-      var t2 = "millisecond", e = "second", n = "minute", r = "hour", i = "day", s2 = "week", u2 = "month", a = "quarter", o = "year", f2 = "date", h2 = /^(\d{4})[-/]?(\d{1,2})?[-/]?(\d{0,2})[^0-9]*(\d{1,2})?:?(\d{1,2})?:?(\d{1,2})?\.?(\d+)?$/, c = /\[([^\]]+)]|Y{1,4}|M{1,4}|D{1,2}|d{1,4}|H{1,2}|h{1,2}|a|A|m{1,2}|s{1,2}|Z{1,2}|SSS/g, d = {name: "en", weekdays: "Sunday_Monday_Tuesday_Wednesday_Thursday_Friday_Saturday".split("_"), months: "January_February_March_April_May_June_July_August_September_October_November_December".split("_")}, $2 = function(t22, e2, n2) {
+      var t2 = "millisecond", e = "second", n = "minute", r = "hour", i = "day", s2 = "week", u2 = "month", a = "quarter", o = "year", f2 = "date", h2 = /^(\d{4})[-/]?(\d{1,2})?[-/]?(\d{0,2})[^0-9]*(\d{1,2})?:?(\d{1,2})?:?(\d{1,2})?[.:]?(\d+)?$/, c = /\[([^\]]+)]|Y{1,4}|M{1,4}|D{1,2}|d{1,4}|H{1,2}|h{1,2}|a|A|m{1,2}|s{1,2}|Z{1,2}|SSS/g, d = {name: "en", weekdays: "Sunday_Monday_Tuesday_Wednesday_Thursday_Friday_Saturday".split("_"), months: "January_February_March_April_May_June_July_August_September_October_November_December".split("_")}, $2 = function(t22, e2, n2) {
         var r2 = String(t22);
         return !r2 || r2.length >= e2 ? t22 : "" + Array(e2 + 1 - r2.length).join(n2) + t22;
       }, l = {s: $2, z: function(t22) {
@@ -7065,15 +7065,7 @@ var require_util = __commonJS((exports2, module2) => {
       setTimeout(callback2, 0);
     };
     if (typeof window !== "undefined" && typeof window.postMessage === "function") {
-      var msg = "forge.setImmediate";
-      var callbacks = [];
-      util.setImmediate = function(callback2) {
-        callbacks.push(callback2);
-        if (callbacks.length === 1) {
-          window.postMessage(msg, "*");
-        }
-      };
-      function handler(event) {
+      let handler2 = function(event) {
         if (event.source === window && event.data === msg) {
           event.stopPropagation();
           var copy = callbacks.slice();
@@ -7082,8 +7074,17 @@ var require_util = __commonJS((exports2, module2) => {
             callback2();
           });
         }
-      }
-      window.addEventListener("message", handler, true);
+      };
+      var handler = handler2;
+      var msg = "forge.setImmediate";
+      var callbacks = [];
+      util.setImmediate = function(callback2) {
+        callbacks.push(callback2);
+        if (callbacks.length === 1) {
+          window.postMessage(msg, "*");
+        }
+      };
+      window.addEventListener("message", handler2, true);
     }
     if (typeof MutationObserver !== "undefined") {
       var now = Date.now();
