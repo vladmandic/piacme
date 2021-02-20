@@ -273,7 +273,6 @@ async function getCert() {
 }
 
 async function monitorCert(f = null) {
-  await getCert();
   setTimeout(async () => {
     callback = f;
     await getCert();
