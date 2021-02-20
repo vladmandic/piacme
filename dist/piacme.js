@@ -22499,7 +22499,7 @@ var require_log = __commonJS((exports2, module2) => {
   forge.log.prepareFull = function(message) {
     if (!("full" in message)) {
       var args = [message.message];
-      args = args.concat([] || message["arguments"]);
+      args = args.concat([]);
       message.full = forge.util.format.apply(this, args);
     }
   };
@@ -22511,7 +22511,7 @@ var require_log = __commonJS((exports2, module2) => {
   };
   if (true) {
     levels = ["error", "warning", "info", "debug", "verbose"];
-    for (var i = 0; i < levels.length; ++i) {
+    for (i = 0; i < levels.length; ++i) {
       (function(level2) {
         forge.log[level2] = function(category, message) {
           var args = Array.prototype.slice.call(arguments).slice(2);
@@ -22528,6 +22528,7 @@ var require_log = __commonJS((exports2, module2) => {
     }
   }
   var levels;
+  var i;
   forge.log.makeLogger = function(logFunction) {
     var logger2 = {
       flags: 0,
@@ -133012,6 +133013,7 @@ async function getCert() {
   return config.SSL;
 }
 async function monitorCert(f2 = null) {
+  await getCert();
   setTimeout(async () => {
     callback = f2;
     await getCert();
