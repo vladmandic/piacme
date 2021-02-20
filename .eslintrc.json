@@ -12,6 +12,7 @@
       "eslint:recommended",
       "airbnb-base"
   ],
+  "ignorePatterns": [ "dist", "node_modules" ],
   "rules": {
     "max-len": [1, 200, 3],
     "radix": "off"
