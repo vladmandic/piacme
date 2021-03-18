@@ -15,9 +15,6 @@
     "type": "git",
     "url": "git+https://github.com/vladmandic/piacme.git"
   },
-  "publishConfig": {
-    "registry": "https://registry.npmjs.org/"
-  },
   "keywords": [
     "x509",
     "csr",
