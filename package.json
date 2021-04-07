@@ -37,7 +37,7 @@
     "@root/csr": "^0.8.1",
     "@root/keypairs": "^0.10.1",
     "@root/pem": "^1.0.4",
-    "@vladmandic/pilogger": "^0.2.14",
+    "@vladmandic/pilogger": "^0.2.16",
     "acme-http-01-webroot": "^3.0.0",
     "moment": "^2.29.1",
     "node-forge": "^0.10.0",
@@ -45,8 +45,8 @@
     "x509.js": "^1.0.0"
   },
   "devDependencies": {
-    "esbuild": "^0.9.3",
-    "eslint": "^7.22.0",
+    "esbuild": "^0.11.6",
+    "eslint": "^7.23.0",
     "eslint-config-airbnb-base": "^14.2.1",
     "eslint-plugin-import": "^2.22.1"
   }
