@@ -35,9 +35,9 @@
   "dependencies": {
     "@root/acme": "^3.1.0",
     "@root/csr": "^0.8.1",
-    "@root/keypairs": "^0.10.1",
+    "@root/keypairs": "^0.10.3",
     "@root/pem": "^1.0.4",
-    "@vladmandic/pilogger": "^0.2.18",
+    "@vladmandic/pilogger": "^0.3.5",
     "acme-http-01-webroot": "^3.0.0",
     "moment": "^2.29.1",
     "node-forge": "^0.10.0",
@@ -45,9 +45,9 @@
     "x509.js": "^1.0.0"
   },
   "devDependencies": {
-    "esbuild": "^0.12.22",
-    "eslint": "^7.32.0",
-    "eslint-config-airbnb-base": "^14.2.1",
-    "eslint-plugin-import": "^2.24.1"
+    "esbuild": "^0.14.3",
+    "eslint": "^8.4.1",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-plugin-import": "^2.25.3"
   }
 }
