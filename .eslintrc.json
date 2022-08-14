@@ -16,6 +16,7 @@
   "rules": {
     "max-len": [1, 200, 3],
     "radix": "off",
-    "dot-notation": "off"
+    "dot-notation": "off",
+    "object-curly-newline":"off"
   }
 }
