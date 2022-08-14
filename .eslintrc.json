@@ -15,8 +15,9 @@
   "ignorePatterns": [ "dist", "node_modules" ],
   "rules": {
     "max-len": [1, 200, 3],
-    "radix": "off",
-    "dot-notation": "off",
+    "radix":"off",
+    "dot-notation":"off",
+    "no-mixed-operators":"off",
     "object-curly-newline":"off"
   }
 }

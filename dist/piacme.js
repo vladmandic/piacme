@@ -24346,7 +24346,11 @@ async function createCert(force = false) {
   initial = true;
   let cert;
   if (force || !fs.existsSync(config.fullChain)) {
-    log.info("acme create certificate");
+    if (!config.domains || config.domains.length <= 0) {
+      log.info("acme skip create certificate", { domains: config.domains });
+      return false;
+    }
+    log.info("acme create certificate", { domains: config.domains, encoding: "der" });
     const csrDer = await CSR.csr({ jwk: config.key, domains: config.domains, encoding: "der" });
     const csr = PEM.packBlock({ type: "CERTIFICATE REQUEST", bytes: csrDer });
     const http01 = challenge.create({ webroot: "./.well-known/acme-challenge" });
@@ -24359,13 +24363,12 @@ async function createCert(force = false) {
         res.writeHead(200);
         res.write(key.key);
         res.end();
-        if (config.debug)
-          log.info("acme challenge", { key: key.host, url: req.url, sent: key.key });
+        log.info("acme challenge", { key: key.host, url: req.url, sent: key.key });
       } else {
         log.info("acme challenge", { key: key.host, url: req.url });
       }
     });
-    server.listen(80, () => log.state("acme validation", { server: "ready" }));
+    server.listen(80, () => log.state("acme validation", { server: "ready", webroot: "./.well-known/acme-challenge" }));
     server.on("error", (err) => log.error("acme validation", { err: err.message || err }));
     server.on("request", (req, res) => {
       req.socket["_isIdle"] = false;
@@ -24400,6 +24403,10 @@ ${pems.chain}
 }
 async function createKeys() {
   initial = true;
+  if (!config.domains || config.domains.length <= 0) {
+    log.info("acme skip create keys", { domains: config.domains });
+    return;
+  }
   const packageAgent = config.application;
   acme = ACME.create({ maintainerEmail: config.maintainer, packageAgent, notify });
   const directoryUrl = "https://acme-v02.api.letsencrypt.org/directory";

@@ -55,7 +55,11 @@ async function createCert(force = false) {
   // Generate or load fullchain
   let cert;
   if (force || !fs.existsSync(config.fullChain)) {
-    log.info('acme create certificate');
+    if (!config.domains || (config.domains.length <= 0)) {
+      log.info('acme skip create certificate', { domains: config.domains });
+      return false;
+    }
+    log.info('acme create certificate', { domains: config.domains, encoding: 'der' });
     // what are we requesting
     const csrDer = await CSR.csr({ jwk: config.key, domains: config.domains, encoding: 'der' });
     // @ts-ignore
@@ -74,7 +78,7 @@ async function createCert(force = false) {
         res.writeHead(200);
         res.write(key.key);
         res.end();
-        if (config.debug) log.info('acme challenge', { key: key.host, url: req.url, sent: key.key });
+        log.info('acme challenge', { key: key.host, url: req.url, sent: key.key });
       } else {
         log.info('acme challenge', { key: key.host, url: req.url });
       }
@@ -82,12 +86,9 @@ async function createCert(force = false) {
 
     // to enable node to bind to port 80 as non-root run:
     // sudo setcap 'cap_net_bind_service=+ep' `which node`
-    server.listen(80, () => log.state('acme validation', { server: 'ready' }));
-
+    server.listen(80, () => log.state('acme validation', { server: 'ready', webroot: './.well-known/acme-challenge' }));
     server.on('error', (err) => log.error('acme validation', { err: err.message || err }));
-
-    // stop http server
-    server.on('request', (req, res) => {
+    server.on('request', (req, res) => { // stop http server once request has finished
       req.socket['_isIdle'] = false;
       res.on('finish', () => {
         log.state('acme validation', { server: 'finish' });
@@ -126,6 +127,10 @@ async function createCert(force = false) {
 
 async function createKeys() {
   initial = true;
+  if (!config.domains || (config.domains.length <= 0)) {
+    log.info('acme skip create keys', { domains: config.domains });
+    return;
+  }
   // initialize acme
   const packageAgent = config.application;
   acme = ACME.create({ maintainerEmail: config.maintainer, packageAgent, notify });
