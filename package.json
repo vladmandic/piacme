@@ -1,6 +1,6 @@
 {
   "name": "@vladmandic/piacme",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Simple ACME/LetsEncrypt HTTP/SSL Certificate Management",
   "main": "dist/piacme.js",
   "engines": {
