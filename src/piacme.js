@@ -35,11 +35,7 @@ let callback = null;
 const auth = [];
 
 function notify(evt, msg) {
-<<<<<<< HEAD
-  if (config.debug) log.data('acme notification', { evt, msg });
-=======
   if (config.debug) log.data('ACME Notification:', evt, msg);
->>>>>>> 1d8982c (update)
   let key;
   if (msg.challenge && msg.challenge.keyAuthorization) key = msg.challenge.keyAuthorization;
   let token;
@@ -59,15 +55,11 @@ async function createCert(force = false) {
   // Generate or load fullchain
   let cert;
   if (force || !fs.existsSync(config.fullChain)) {
-<<<<<<< HEAD
     if (!config.domains || (config.domains.length <= 0)) {
-      log.info('acme skip create certificate', { domains: config.domains });
+      log.info('ACME Skip create certificate', { domains: config.domains });
       return false;
     }
-    log.info('acme create certificate', { domains: config.domains, encoding: 'der' });
-=======
-    log.info('ACME Create certificate');
->>>>>>> 1d8982c (update)
+    log.info('ACME Create certificate', { domains: config.domains, encoding: 'der' });
     // what are we requesting
     const csrDer = await CSR.csr({ jwk: config.key, domains: config.domains, encoding: 'der' });
     // @ts-ignore
@@ -86,36 +78,22 @@ async function createCert(force = false) {
         res.writeHead(200);
         res.write(key.key);
         res.end();
-        log.info('acme challenge', { key: key.host, url: req.url, sent: key.key });
+        log.info('ACME Challenge', { key: key.host, url: req.url, sent: key.key });
       } else {
-        log.info('acme challenge', { key: key.host, url: req.url });
+        log.info('ACME Challenge', { key: key.host, url: req.url });
       }
     });
 
     // to enable node to bind to port 80 as non-root run:
     // sudo setcap 'cap_net_bind_service=+ep' `which node`
-<<<<<<< HEAD
-    server.listen(80, () => log.state('acme validation', { server: 'ready', webroot: './.well-known/acme-challenge' }));
-    server.on('error', (err) => log.error('acme validation', { err: err.message || err }));
-    server.on('request', (req, res) => { // stop http server once request has finished
-      req.socket['_isIdle'] = false;
-=======
     server.listen(80, () => log.state('ACME Validation server ready'));
-
-    // start actual verification
-    log.info(`ACME Validating domains: ${config.domains.join(' ')}`);
-    log.info(`ACME Account contract: ${config.account.contact} crv: ${config.accountKey.crv}`);
-    const pems = await acme.certificates.create({
-      account: config.account, accountKey: config.accountKey, csr, domains: config.domains, challenges, skipChallengeTests: true, skipDryRun: true,
-    });
 
     // stop http server
     server.on('request', (req, res) => {
       // eslint-disable-next-line no-underscore-dangle
       req.socket._isIdle = false;
->>>>>>> 1d8982c (update)
       res.on('finish', () => {
-        log.state('acme validation', { server: 'finish' });
+        log.state('ACME Validation', { server: 'finish' });
         req.socket['_isIdle'] = true;
         req.socket.destroy();
       });
@@ -123,27 +101,28 @@ async function createCert(force = false) {
     // server.on('close', () => log.info('acme validation server closed'));
 
     // start actual verification
-    log.info('acme validating', { domains: config.domains });
+    log.info('ACME Validating domains:', { domains: config.domains });
+    log.info(`ACME Account contract: ${config.account.contact} crv: ${config.accountKey.crv}`);
 
     let pems;
     try {
       pems = await acme.certificates.create({ account: config.account, accountKey: config.accountKey, csr, domains: config.domains, challenges, skipChallengeTests: true, skipDryRun: true });
     } catch (err) {
-      log.warn('acme validation exception', err.code ? { code: err.code, syscall: err.syscall, address: err.address, port: err.port } : err);
+      log.warn('ACME Validation exception', err.code ? { code: err.code, syscall: err.syscall, address: err.address, port: err.port } : err);
     }
 
-    server.close(() => log.info('acme validation', { server: 'close' }));
+    server.close(() => log.info('ACME Validation', { server: 'close' }));
 
     // generate actual fullchain from received pems
     if (!pems || !pems.cert || !pems.chain) {
-      log.warn('acme validation failed');
+      log.warn('ACME Validation failed');
       return false;
     }
-    log.info('acme certificate:', { create: config.fullChain });
+    log.info('ACME Certificate:', { create: config.fullChain });
     cert = `${pems.cert}\n${pems.chain}\n`;
     await fs.promises.writeFile(config.fullChain, cert, 'ascii');
   } else if (initial) {
-    log.info('acme certificate', { load: config.fullChain });
+    log.info('ACME Certificate', { load: config.fullChain });
     cert = await fs.promises.readFile(config.fullChain, 'ascii');
   }
   return true;
@@ -152,7 +131,7 @@ async function createCert(force = false) {
 async function createKeys() {
   initial = true;
   if (!config.domains || (config.domains.length <= 0)) {
-    log.info('acme skip create keys', { domains: config.domains });
+    log.info('ACME Skip create keys', { domains: config.domains });
     return;
   }
   // initialize acme
@@ -160,49 +139,41 @@ async function createKeys() {
   acme = ACME.create({ maintainerEmail: config.maintainer, packageAgent, notify });
   const directoryUrl = 'https://acme-v02.api.letsencrypt.org/directory';
   await acme.init(directoryUrl);
-  log.info('acme request', { domains: config.domains });
+  log.info('ACME Request', { domains: config.domains });
 
   // Generate or load account key
   if (!fs.existsSync(config.accountKeyFile)) {
-    log.info('acme account key', { generate: config.accountKeyFile });
+    log.info('ACME Account key', { generate: config.accountKeyFile });
     const accountKeypair = await Keypairs.generate({ kty: 'EC', format: 'jwk' });
     config.accountKey = accountKeypair.private;
     const pem = await Keypairs.export({ jwk: config.accountKey });
     await fs.promises.writeFile(config.accountKeyFile, pem, 'ascii');
   } else {
-    log.info('acme account key', { load: config.accountKeyFile });
+    log.info('ACME Account key', { load: config.accountKeyFile });
     const pem = await fs.promises.readFile(config.accountKeyFile, 'ascii');
     config.accountKey = await Keypairs.import({ pem });
   }
 
   // Create or load account
   if (!fs.existsSync(config.accountFile)) {
-    log.info('acme account', { create: config.accountFile });
+    log.info('ACME Account', { create: config.accountFile });
     config.account = await acme.accounts.create({ subscriberEmail: config.subscriber, agreeToTerms: true, accountKey: config.accountKey });
     await fs.promises.writeFile(config.accountFile, JSON.stringify(config.account), 'ascii');
   } else {
-    log.info('acme account', { load: config.accountFile });
+    log.info('ACME Account', { load: config.accountFile });
     const json = await fs.promises.readFile(config.accountFile, 'ascii');
     config.account = JSON.parse(json);
   }
 
   // Generate or load server key
   if (!fs.existsSync(config.ServerKeyFile)) {
-<<<<<<< HEAD
-    log.info('acme server key', { generate: config.ServerKeyFile });
-=======
     log.info('ACME Server key: generate', config.ServerKeyFile);
->>>>>>> 1d8982c (update)
     const serverKeypair = await Keypairs.generate({ kty: 'RSA', format: 'jwk' });
     config.key = serverKeypair.private;
     const pem = await Keypairs.export({ jwk: config.key });
     await fs.promises.writeFile(config.ServerKeyFile, pem, 'ascii');
   } else {
-<<<<<<< HEAD
-    log.info('acme server key', { load: config.ServerKeyFile });
-=======
     log.info('ACME Server key: load', config.ServerKeyFile);
->>>>>>> 1d8982c (update)
     const pem = await fs.promises.readFile(config.ServerKeyFile, 'ascii');
     config.key = await Keypairs.import({ pem });
   }
@@ -251,21 +222,6 @@ async function parseCert() {
 
 async function checkCert() {
   if (fs.existsSync(config.fullChain)) {
-<<<<<<< HEAD
-    if (initial) log.info('ssl certificate', { check: config.fullChain });
-    const ssl = await parseCert();
-    const now = new Date();
-    if (!ssl.account || ssl.account.error) {
-      log.warn('ssl certificate error', { account: ssl.account.error });
-      return false;
-    }
-    if (!ssl.serverKey || ssl.serverKey.error || !ssl.accountKey || ssl.accountKey.error) {
-      log.warn('ssl certificate error', { key: ssl.serverKey.error, account: ssl.account.error });
-      return false;
-    }
-    if (!ssl.fullChain || ssl.fullChain.error) {
-      log.warn('ssl certificate error', { fullchain: ssl.fullChain.error });
-=======
     if (initial) log.info('ACME Certificate check:', config.fullChain);
     const ssl = await parseCert();
     const now = new Date();
@@ -279,42 +235,25 @@ async function checkCert() {
     }
     if (!ssl.fullChain || ssl.fullChain.error) {
       log.warn(`SSL Certificate error: ${ssl.fullChain.error}`);
->>>>>>> 1d8982c (update)
       return false;
     }
     // @ts-ignore
     if (!ssl.fullChain.notBefore || (now - ssl.fullChain.notBefore < 0)) {
-<<<<<<< HEAD
-      log.warn('ssl certificate invalid', { notbefore: ssl.fullChain.notBefore });
-=======
       log.warn(`ACME Certificate invalid notBefore: ${ssl.fullChain.notBefore}`);
->>>>>>> 1d8982c (update)
       return false;
     }
     // @ts-ignore
     if (!ssl.fullChain.notAfter || (now - ssl.fullChain.notAfter > 0)) {
-<<<<<<< HEAD
-      log.warn('ssl certificate invalid', { notafter: ssl.fullChain.notAfter });
-=======
       log.warn(`ACME Certificate invalid notAfter: ${ssl.fullChain.notAfter}`);
->>>>>>> 1d8982c (update)
       return false;
     }
     // @ts-ignore
     config.remainingDays = (ssl.fullChain.notAfter - now) / 1000 / 60 / 60 / 24;
-<<<<<<< HEAD
-    log.state('ssl certificate validity', { days: Math.round(config.remainingDays), renew: config.remainingDays < config.renewDays ? 'now' : 'skip' });
-    if (config.remainingDays < config.renewDays) return false;
-    return true;
-  }
-  log.warn('ssl certificate missing', { cert: config.fullChain });
-=======
     log.state('SSL Certificate expires in', config.remainingDays.toFixed(1), `days: ${config.remainingDays < config.renewDays ? 'renewing now' : 'skipping renewal'}`);
     if (config.remainingDays < config.renewDays) return false;
     return true;
   }
   log.warn(`SSL Certificate does not exist: ${config.fullChain}`);
->>>>>>> 1d8982c (update)
   return false;
 }
 
@@ -327,11 +266,7 @@ async function getCert() {
     if (!createdOK) return;
     certOk = await checkCert(); // check again
     if (!certOk) {
-<<<<<<< HEAD
-      log.error('ssl certificate validation failed');
-=======
       log.error('SSL Certificate did not pass validation');
->>>>>>> 1d8982c (update)
     }
     if (callback) {
       callback();
@@ -361,11 +296,7 @@ async function monitorCert(f = null) {
   setTimeout(async () => {
     callback = f;
     await getCert();
-<<<<<<< HEAD
-    log.state('ssl monitor', { cert: config.fullChain, check: 'complete' });
-=======
     log.state('SSL Monitor certificate check complete');
->>>>>>> 1d8982c (update)
   }, 1000 * 60 * config.monitorInterval);
 }
 
