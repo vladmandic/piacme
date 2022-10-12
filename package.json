@@ -8,7 +8,11 @@
   },
   "scripts": {
     "start": "npm run build && node --unhandled-rejections=strict --trace-warnings --no-deprecation dist/piacme.js",
+<<<<<<< HEAD
     "build": "esbuild --outdir=dist --target=es2020 --platform=node --format=cjs --color=true --log-level=error --bundle src/piacme.js",
+=======
+    "build": "esbuild --outdir=dist --target=es2018 --platform=node --format=cjs --color=true --log-level=error --bundle src/piacme.js",
+>>>>>>> 1d8982c (update)
     "lint": "eslint src/piacme.js"
   },
   "repository": {
