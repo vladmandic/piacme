@@ -21094,22 +21094,28 @@ var require_csr = __commonJS({
   }
 });
 
-// node_modules/.pnpm/@root+request@1.7.0/node_modules/@root/request/package.json
+// node_modules/.pnpm/@root+request@1.9.2/node_modules/@root/request/package.json
 var require_package = __commonJS({
-  "node_modules/.pnpm/@root+request@1.7.0/node_modules/@root/request/package.json"(exports2, module2) {
+  "node_modules/.pnpm/@root+request@1.9.2/node_modules/@root/request/package.json"(exports2, module2) {
     module2.exports = {
       name: "@root/request",
-      version: "1.7.0",
+      version: "1.9.2",
       description: "A lightweight, zero-dependency drop-in replacement for request",
       main: "index.js",
+      browser: {
+        "./request.js": "./urequest.js"
+      },
       files: [
-        "lib"
+        "lib",
+        "request.js",
+        "urequest.js"
       ],
       directories: {
         example: "examples"
       },
       scripts: {
-        test: 'echo "Error: no test specified" && exit 1'
+        test: 'echo "Error: no test specified" && exit 1',
+        version: 'npm version -m "chore(release): bump to v%s"'
       },
       repository: {
         type: "git",
@@ -21129,9 +21135,9 @@ var require_package = __commonJS({
   }
 });
 
-// node_modules/.pnpm/@root+request@1.7.0/node_modules/@root/request/index.js
+// node_modules/.pnpm/@root+request@1.9.2/node_modules/@root/request/request.js
 var require_request = __commonJS({
-  "node_modules/.pnpm/@root+request@1.7.0/node_modules/@root/request/index.js"(exports2, module2) {
+  "node_modules/.pnpm/@root+request@1.9.2/node_modules/@root/request/request.js"(exports2, module2) {
     "use strict";
     var http2 = require("http");
     var https = require("https");
@@ -21139,6 +21145,29 @@ var require_request = __commonJS({
     var os = require("os");
     var pkg = require_package();
     var fs2 = require("fs");
+    var _defaults = {
+      sendImmediately: true,
+      method: "",
+      headers: {},
+      useQuerystring: false,
+      followRedirect: true,
+      followAllRedirects: false,
+      followOriginalHttpMethod: false,
+      maxRedirects: 10,
+      removeRefererHeader: false,
+      gzip: false
+    };
+    var _keys = Object.keys(_defaults).concat([
+      "encoding",
+      "stream",
+      "body",
+      "json",
+      "form",
+      "auth",
+      "formData",
+      "FormData",
+      "userAgent"
+    ]);
     function debug() {
       if (module2.exports.debug) {
         console.log.apply(console, arguments);
@@ -21182,6 +21211,94 @@ var require_request = __commonJS({
         return obj;
       };
     }
+    function setupPipe(resp, opts) {
+      var resolve;
+      var reject;
+      var p = new Promise(function(_resolve, _reject) {
+        resolve = _resolve;
+        reject = _reject;
+      });
+      if ("function" === typeof opts.stream.pipe) {
+        if (opts.debug) {
+          console.debug("[@root/request] stream piped");
+        }
+        resp.pipe(opts.stream);
+      }
+      resp.once("error", function(e) {
+        if (opts.debug) {
+          console.debug("[@root/request] stream 'error'");
+          console.error(e.stack);
+        }
+        resp.destroy();
+        if ("function" === opts.stream.destroy) {
+          opts.stream.destroy(e);
+        }
+        reject(e);
+      });
+      resp.once("end", function() {
+        if (opts.debug) {
+          console.debug("[@root/request] stream 'end'");
+        }
+        if ("function" === opts.stream.destroy) {
+          opts.stream.end();
+          opts.stream.destroy();
+        }
+      });
+      resp.once("close", function() {
+        if (opts.debug) {
+          console.debug("[@root/request] stream 'close'");
+        }
+        resolve();
+      });
+      return p;
+    }
+    function handleResponse(resp, opts, cb) {
+      if (null === opts.encoding) {
+        resp._body = [];
+      } else {
+        resp.body = "";
+      }
+      resp._bodyLength = 0;
+      resp.once("error", function(err) {
+        cb(err, resp, resp.body);
+      });
+      resp.on("readable", function() {
+        var chunk;
+        while (chunk = resp.read()) {
+          if ("string" === typeof resp.body) {
+            resp.body += chunk.toString(opts.encoding);
+          } else {
+            resp._body.push(chunk);
+            resp._bodyLength += chunk.length;
+          }
+        }
+      });
+      resp.once("end", function() {
+        if ("string" !== typeof resp.body) {
+          if (1 === resp._body.length) {
+            resp.body = resp._body[0];
+          } else {
+            resp.body = Buffer.concat(resp._body, resp._bodyLength);
+          }
+          resp._body = null;
+        }
+        if (opts.json && "string" === typeof resp.body) {
+          try {
+            resp.body = JSON.parse(resp.body);
+          } catch (e) {
+          }
+        }
+        debug("\n[urequest] resp.toJSON():");
+        if (module2.exports.debug) {
+          debug(resp.toJSON());
+        }
+        if (opts.debug) {
+          console.debug("[@root/request] Response Body:");
+          console.debug(resp.body);
+        }
+        cb(null, resp, resp.body);
+      });
+    }
     function setDefaults(defs) {
       defs = defs || {};
       function urequestHelper(opts, cb) {
@@ -21189,6 +21306,17 @@ var require_request = __commonJS({
         debug(opts);
         var req;
         var finalOpts = {};
+        if ("string" === typeof opts.stream) {
+          if (opts.debug) {
+            console.debug("[@root/request] creating file write stream");
+          }
+          try {
+            opts.stream = fs2.createWriteStream(opts.stream);
+          } catch (e) {
+            cb(e);
+            return;
+          }
+        }
         function onResponse(resp) {
           var followRedirect;
           Object.keys(defs).forEach(function(key) {
@@ -21198,9 +21326,14 @@ var require_request = __commonJS({
             opts[key] = defs[key];
           });
           followRedirect = opts.followRedirect;
+          resp.ok = false;
+          if (resp.statusCode >= 200 && resp.statusCode < 300) {
+            resp.ok = true;
+          }
           resp.toJSON = toJSONifier([
             "statusCode",
             "body",
+            "ok",
             "headers",
             "request"
           ]);
@@ -21241,98 +21374,16 @@ var require_request = __commonJS({
             }
           }
           if (opts.stream) {
-            var resolve;
-            var reject;
-            resp.stream = new Promise(function(_resolve, _reject) {
-              resolve = _resolve;
-              reject = _reject;
-            });
-            if ("string" === typeof opts.stream) {
-              try {
-                if (opts.debug) {
-                  console.debug(
-                    "[@root/request] file write stream created"
-                  );
-                }
-                opts.stream = fs2.createWriteStream(opts.stream);
-              } catch (e) {
-                cb(e);
-              }
-            }
-            if ("function" === typeof opts.stream.pipe) {
-              if (opts.debug) {
-                console.debug("[@root/request] stream piped");
-              }
-              resp.pipe(opts.stream);
-            }
-            resp.on("error", function(e) {
-              if (opts.debug) {
-                console.debug("[@root/request] stream 'error'");
-                console.error(e.stack);
-              }
-              resp.destroy();
-              if ("function" === opts.stream.destroy) {
-                opts.stream.destroy(e);
-              }
-              reject(e);
-            });
-            resp.on("end", function() {
-              if (opts.debug) {
-                console.debug("[@root/request] stream 'end'");
-              }
-              if ("function" === opts.stream.destroy) {
-                opts.stream.end();
-                opts.stream.destroy();
-              }
-            });
-            resp.on("close", function() {
-              if (opts.debug) {
-                console.debug("[@root/request] stream 'close'");
-              }
-              resolve();
-            });
+            resp.stream = setupPipe(resp, opts);
+            resp.stream.body = async function() {
+              handleResponse(resp, opts, cb);
+              await resp.stream;
+              return resp.body;
+            };
             cb(null, resp);
             return;
           }
-          if (null === opts.encoding) {
-            resp._body = [];
-          } else {
-            resp.body = "";
-          }
-          resp._bodyLength = 0;
-          resp.on("data", function(chunk) {
-            if ("string" === typeof resp.body) {
-              resp.body += chunk.toString(opts.encoding);
-            } else {
-              resp._body.push(chunk);
-              resp._bodyLength += chunk.length;
-            }
-          });
-          resp.on("end", function() {
-            if ("string" !== typeof resp.body) {
-              if (1 === resp._body.length) {
-                resp.body = resp._body[0];
-              } else {
-                resp.body = Buffer.concat(resp._body, resp._bodyLength);
-              }
-              resp._body = null;
-            }
-            if (opts.json && "string" === typeof resp.body) {
-              try {
-                resp.body = JSON.parse(resp.body);
-              } catch (e) {
-              }
-            }
-            debug("\n[urequest] resp.toJSON():");
-            if (module2.exports.debug) {
-              debug(resp.toJSON());
-            }
-            if (opts.debug) {
-              console.debug("[@root/request] Response Body:");
-              console.debug(resp.body);
-            }
-            cb(null, resp, resp.body);
-          });
+          handleResponse(resp, opts, cb);
         }
         var _body;
         var MyFormData;
@@ -21340,7 +21391,7 @@ var require_request = __commonJS({
         var formHeaders;
         var requester;
         if (opts.body) {
-          if (true === opts.json) {
+          if (true === opts.json && "string" !== typeof opts.body) {
             _body = JSON.stringify(opts.body);
           } else {
             _body = opts.body;
@@ -21372,7 +21423,9 @@ var require_request = __commonJS({
           "timeout",
           "setHost"
         ].forEach(function(key) {
-          finalOpts[key] = opts.uri[key];
+          if (key in opts) {
+            finalOpts[key] = opts[key];
+          }
         });
         finalOpts.method = opts.method;
         finalOpts.headers = JSON.parse(JSON.stringify(opts.headers));
@@ -21483,13 +21536,13 @@ var require_request = __commonJS({
           }
         }
         req = requester.request(finalOpts, onResponse);
-        req.on("error", cb);
+        req.once("error", cb);
         if (_body) {
           debug("\n[urequest] '" + finalOpts.method + "' (request) body");
           debug(_body);
           if ("function" === typeof _body.pipe) {
             _body.pipe(req);
-            _body.on("error", function(err) {
+            _body.once("error", function(err) {
               _body.destroy();
               req.destroy(err);
             });
@@ -21520,7 +21573,7 @@ var require_request = __commonJS({
         if ("string" === typeof opts) {
           opts = { url: opts };
         }
-        module2.exports._keys.forEach(function(key) {
+        _keys.forEach(function(key) {
           if (key in opts && "undefined" !== typeof opts[key]) {
             reqOpts[key] = opts[key];
           } else if (key in defs) {
@@ -21608,32 +21661,20 @@ var require_request = __commonJS({
       }
       return ua;
     }
-    var _defaults = {
-      sendImmediately: true,
-      method: "",
-      headers: {},
-      useQuerystring: false,
-      followRedirect: true,
-      followAllRedirects: false,
-      followOriginalHttpMethod: false,
-      maxRedirects: 10,
-      removeRefererHeader: false,
-      gzip: false
-    };
-    module2.exports = setDefaults(_defaults);
-    module2.exports._keys = Object.keys(_defaults).concat([
-      "encoding",
-      "stream",
-      "body",
-      "json",
-      "form",
-      "auth",
-      "formData",
-      "FormData",
-      "userAgent"
-    ]);
+    exports2.request = setDefaults(_defaults);
+    exports2._keys = _keys;
+    module2.exports = exports2.request;
+    module2.exports._keys = _keys;
     module2.exports.debug = -1 !== (process.env.NODE_DEBUG || "").split(/\s+/g).indexOf("urequest");
     debug("DEBUG ON for urequest");
+  }
+});
+
+// node_modules/.pnpm/@root+request@1.9.2/node_modules/@root/request/index.js
+var require_request2 = __commonJS({
+  "node_modules/.pnpm/@root+request@1.9.2/node_modules/@root/request/index.js"(exports2, module2) {
+    "use strict";
+    module2.exports = require_request();
   }
 });
 
@@ -21643,7 +21684,7 @@ var require_http = __commonJS({
     "use strict";
     var http2 = module2.exports;
     var promisify = require("util").promisify;
-    var request = promisify(require_request());
+    var request = promisify(require_request2());
     http2.request = function(opts) {
       return request(opts);
     };
@@ -24523,23 +24564,81 @@ async function monitorCert(f = null) {
     log.state("SSL Monitor certificate check complete");
   }, 1e3 * 60 * config.monitorInterval);
 }
-function initConfig(userConfig) {
+function setConfig(userConfig) {
   config = { ...config, ...userConfig };
 }
-async function test() {
+async function scanHost(host, startPort, endPort) {
+  try {
+    log.info("Connection test", { fetch: "create" });
+    const res = await fetch("https://www.ipfingerprints.com/scripts/getPortsInfo.php", {
+      headers: {
+        accept: "application/json, text/javascript, */*; q=0.01",
+        "cache-control": "no-cache",
+        "content-type": "application/x-www-form-urlencoded",
+        pragma: "no-cache",
+        Referer: "https://www.ipfingerprints.com/portscan.php"
+      },
+      body: `remoteHost=${host}&start_port=${startPort}&end_port=${endPort}&normalScan=Yes&scan_type=connect&ping_type=none`,
+      method: "POST"
+    });
+    if (!res?.ok)
+      return [];
+    const html = await res.text();
+    const text = html.replace(/<[^>]*>/g, "");
+    const lines = text.split("\\n").map((line) => line.replace("'", "").trim()).filter((line) => line.includes("tcp "));
+    const parsed = lines.map((line) => line.replace("\\/tcp", "").split(" ").filter((str) => str.length > 0));
+    const services = parsed.map((line) => ({ host, port: Number(line[0]), state: line[1], service: line[2] }));
+    return services;
+  } catch {
+    return [];
+  }
+}
+async function testConnection(host, timeout = 5e3) {
+  return new Promise((resolve) => {
+    let timeoutCallback;
+    const server = http.createServer();
+    server.on("listening", () => {
+      scanHost(host, 80, 80).then((services) => {
+        log.state("Connection test", { services });
+        if (timeoutCallback)
+          clearTimeout(timeoutCallback);
+        resolve(services.length > 0);
+        server.close();
+      });
+    });
+    server.on("error", (err) => log.warn("Connection test", { code: err.code, call: err.syscall, port: err.port }));
+    server.on("request", (req, res) => {
+      res.writeHead(200);
+      res.write('{ "connection": true }');
+      res.end();
+    });
+    timeoutCallback = setTimeout(() => {
+      if (server)
+        server.close();
+      log.warn("Connection test", { host, timeout });
+      resolve(false);
+    }, timeout);
+    server.listen(80);
+  });
+}
+async function testModule() {
+  const status = await testConnection(config.domains[0]);
+  log.data("Test connection", status);
   await getCert();
   const details = await parseCert();
   log.data("Parsed details:", details);
 }
 try {
   if (require.main === module)
-    test();
-} catch {
+    testModule();
+} catch (err) {
+  log.error("test:", err);
 }
-exports.init = initConfig;
+exports.setConfig = setConfig;
 exports.getCert = getCert;
 exports.parseCert = parseCert;
 exports.checkCert = checkCert;
 exports.createKeys = createKeys;
 exports.createCert = createCert;
 exports.monitorCert = monitorCert;
+exports.testConnection = testConnection;

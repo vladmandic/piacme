@@ -98,7 +98,7 @@ async function createCert(force = false) {
         req.socket.destroy();
       });
     });
-    // server.on('close', () => log.info('acme validation server closed'));
+    // server.on('close', () => log.info('ACME Validation server closed'));
 
     // start actual verification
     log.info('ACME Validating domains:', { domains: config.domains });
@@ -273,23 +273,6 @@ async function getCert() {
       callback = null;
     }
   }
-  /*
-  if (initial) {
-    const ssl = await parseCert();
-    if (ssl.account && !ssl.account.error) {
-      log.info(`SSL Account: ${ssl.account.contact} Created: ${moment(ssl.account.createdAt).format('YYYY-MM-DD HH:mm:ss')} `);
-    } else log.warn(`SSL Account error: ${ssl.account.error}`);
-    if (ssl.serverKey && !ssl.serverKey.error && ssl.accountKey && !ssl.accountKey.error) {
-      log.info(`SSL Keys server: ${ssl.serverKey.type} Account: ${ssl.accountKey.type} `);
-    } else log.warn(`SSL Keys error server: ${ssl.serverKey.error} Account: ${ssl.account.error}`);
-    if (ssl.fullChain && !ssl.fullChain.error) {
-      log.info(`SSL Certificate subject: ${ssl.fullChain.subject} Issuer: ${ssl.fullChain.issuer}`);
-    } else log.warn(`SSL Certificate error: ${ssl.fullChain.error}`);
-    config.SSL = { Key: `../${config.ServerKeyFile}`, Crt: `../${config.fullChain}` };
-    initial = false;
-  }
-  return config.SSL;
-  */
 }
 
 async function monitorCert(f = null) {
@@ -300,26 +283,85 @@ async function monitorCert(f = null) {
   }, 1000 * 60 * config.monitorInterval);
 }
 
-function initConfig(userConfig) {
+function setConfig(userConfig) {
   config = { ...config, ...userConfig };
 }
 
-async function test() {
+async function scanHost(host, startPort, endPort) {
+  try {
+    log.info('Connection test', { fetch: 'create' });
+    const res = await fetch('https://www.ipfingerprints.com/scripts/getPortsInfo.php', {
+      headers: {
+        accept: 'application/json, text/javascript, */*; q=0.01',
+        'cache-control': 'no-cache',
+        'content-type': 'application/x-www-form-urlencoded',
+        pragma: 'no-cache',
+        Referer: 'https://www.ipfingerprints.com/portscan.php',
+      },
+      body: `remoteHost=${host}&start_port=${startPort}&end_port=${endPort}&normalScan=Yes&scan_type=connect&ping_type=none`,
+      method: 'POST',
+    });
+    if (!res?.ok) return [];
+    const html = await res.text();
+    const text = html.replace(/<[^>]*>/g, '');
+    const lines = text.split('\\n').map((line) => line.replace('\'', '').trim()).filter((line) => line.includes('tcp '));
+    const parsed = lines.map((line) => line.replace('\\/tcp', '').split(' ').filter((str) => str.length > 0));
+    const services = parsed.map((line) => ({ host, port: Number(line[0]), state: line[1], service: line[2] }));
+    return services;
+  } catch {
+    return [];
+  }
+}
+
+async function testConnection(host, timeout = 5000) {
+  return new Promise((resolve) => {
+    let timeoutCallback;
+    const server = http.createServer();
+    server.on('listening', () => {
+      // log.state('Connection test', { server: 'listen' });
+      scanHost(host, 80, 80).then((services) => {
+        log.state('Connection test', { services });
+        if (timeoutCallback) clearTimeout(timeoutCallback);
+        resolve(services.length > 0);
+        server.close();
+      });
+    });
+    server.on('error', (err) => log.warn('Connection test', { code: err.code, call: err.syscall, port: err.port }));
+    // server.on('close', () => log.info('Connection test', { server: 'close' }));
+    server.on('request', (req, res) => {
+      // log.state('Connection test', { url: req.url });
+      res.writeHead(200);
+      res.write('{ "connection": true }');
+      res.end();
+    });
+    timeoutCallback = setTimeout(() => {
+      if (server) server.close();
+      log.warn('Connection test', { host, timeout });
+      resolve(false);
+    }, timeout);
+    server.listen(80);
+  });
+}
+
+async function testModule() {
+  const status = await testConnection(config.domains[0]);
+  log.data('Test connection', status);
   await getCert();
   const details = await parseCert(); // parse any cert
   log.data('Parsed details:', details);
 }
 
 try {
-  if (require.main === module) test();
-} catch {
-  //
+  if (require.main === module) testModule();
+} catch (err) {
+  log.error('test:', err);
 }
 
-exports.init = initConfig;
+exports.setConfig = setConfig;
 exports.getCert = getCert;
 exports.parseCert = parseCert;
 exports.checkCert = checkCert;
 exports.createKeys = createKeys;
 exports.createCert = createCert;
 exports.monitorCert = monitorCert;
+exports.testConnection = testConnection;
